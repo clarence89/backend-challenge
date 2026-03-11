@@ -69,6 +69,8 @@ Total records
 * Models (Due to requirements)
 * Migrations (Due to requirements)
 * Middlewares (Overkill to implement)
+* Row Locking to prevent Race Conditions
+* Atomic Database
 
 ## Setup Instructions
 
