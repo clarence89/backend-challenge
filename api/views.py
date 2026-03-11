@@ -5,6 +5,89 @@ import requests
 
 
 @api_view(["GET"])
+def categories(request):
+    page = int(request.GET.get("page", 1))
+    limit = int(request.GET.get("limit", 10))
+    search = request.GET.get("search")
+    offset = (page - 1) * limit
+
+    base_query = "SELECT id,name,is_active,created_at FROM categories WHERE is_active=1"
+    params = []
+
+    if search:
+        base_query += " AND name LIKE %s"
+        params.append(f"%{search}%")
+
+    base_query += " ORDER BY id LIMIT %s OFFSET %s"
+    params.extend([limit, offset])
+
+    with connection.cursor() as cursor:
+        cursor.execute(base_query, params)
+        rows = cursor.fetchall()
+
+        count_query = "SELECT COUNT(*) FROM categories WHERE is_active=1"
+        count_params = []
+        if search:
+            count_query += " AND name LIKE %s"
+            count_params.append(f"%{search}%")
+        cursor.execute(count_query, count_params)
+        result = cursor.fetchone()
+        total = result[0] if result else 0
+    data = [
+        {"id": r[0], "name": r[1], "is_active": bool(r[2]), "created_at": r[3]}
+        for r in rows
+    ]
+
+    return Response({"page": page, "limit": limit, "total": total, "data": data})
+
+
+@api_view(["GET"])
+def category(request, id):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id,name,is_active,created_at FROM categories WHERE id=%s AND is_active=1",
+            [id],
+        )
+        row = cursor.fetchone()
+
+    if not row:
+        return Response({"error": "category_not_found"}, status=404)
+
+    return Response(
+        {"id": row[0], "name": row[1], "is_active": bool(row[2]), "created_at": row[3]}
+    )
+
+
+@api_view(["POST"])
+def create_category(request):
+    data = request.data
+    if "name" not in data:
+        return Response({"error": "name_required"}, status=400)
+
+    with connection.cursor() as cursor:
+        cursor.execute("INSERT INTO categories(name) VALUES(%s)", [data["name"]])
+
+    return Response({"status": "created"})
+
+
+@api_view(["PUT"])
+def update_category(request, id):
+    data = request.data
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "UPDATE categories SET name=%s WHERE id=%s", [data.get("name"), id]
+        )
+    return Response({"status": "updated"})
+
+
+@api_view(["DELETE"])
+def delete_category(request, id):
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE categories SET is_active=0 WHERE id=%s", [id])
+    return Response({"status": "deleted"})
+
+
+@api_view(["GET"])
 def products(request):
 
     page = int(request.GET.get("page", 1))
@@ -39,7 +122,7 @@ def products(request):
             "name": r[1],
             "price": float(r[2]),
             "stock": r[3],
-            "category_id": r[4]
+            "category_id": r[4],
         }
         for r in rows
     ]
