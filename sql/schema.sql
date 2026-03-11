@@ -13,6 +13,7 @@ CREATE TABLE
         name TEXT NOT NULL,
         price DECIMAL(10, 2) NOT NULL,
         stock INTEGER NOT NULL,
+        is_deleted BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (category_id) REFERENCES categories (id)
     );

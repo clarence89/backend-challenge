@@ -15,13 +15,14 @@ def products(request):
 
     base_query = """
     SELECT id,name,price,stock,category_id
-    FROM products
+    FROM products    
+    WHERE is_deleted=false
     """
 
     params = []
 
     if category_id:
-        base_query += " WHERE category_id = %s"
+        base_query += " AND category_id = %s"
         params.append(category_id)
 
     base_query += " ORDER BY id LIMIT %s OFFSET %s"
@@ -54,7 +55,7 @@ def product(request, id):
             """
             SELECT id,name,price,stock,category_id,created_at
             FROM products
-            WHERE id=%s
+            WHERE id=%s AND is_deleted=false
             """,
             [id],
         )
@@ -120,7 +121,7 @@ def update_product(request, id):
 def delete_product(request, id):
 
     with connection.cursor() as cursor:
-        cursor.execute("DELETE FROM products WHERE id=%s", [id])
+        cursor.execute("UPDATE products SET is_deleted=true WHERE id=%s", [id])
 
     return Response({"status": "deleted"})
 
