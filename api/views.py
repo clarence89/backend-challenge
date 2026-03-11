@@ -7,14 +7,27 @@ import requests
 @api_view(["GET"])
 def products(request):
 
+    page = int(request.GET.get("page", 1))
+    limit = int(request.GET.get("limit", 10))
+
+    offset = (page - 1) * limit
+
     with connection.cursor() as cursor:
-        cursor.execute("""
-        SELECT id,name,price,stock,category_id,created_at
-        FROM products
-        ORDER BY id
-        """)
+        cursor.execute(
+            """
+            SELECT id,name,price,stock,category_id
+            FROM products
+            ORDER BY id
+            LIMIT %s OFFSET %s
+            """,
+            [limit, offset]
+        )
         rows = cursor.fetchall()
 
+        cursor.execute("SELECT COUNT(*) FROM products")
+        result = cursor.fetchone()
+        total = result[0] if result else 0
+        
     data = [
         {
             "id": r[0],
@@ -22,12 +35,16 @@ def products(request):
             "price": float(r[2]),
             "stock": r[3],
             "category_id": r[4],
-            "created_at": r[5]
         }
         for r in rows
     ]
 
-    return Response(data)
+    return Response({
+        "page": page,
+        "limit": limit,
+        "total": total,
+        "data": data
+    })
 
 
 @api_view(["GET"])
