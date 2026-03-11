@@ -2,7 +2,7 @@
 
 ## Tech Stack
 
-* Python
+* Python 3.12
 * Django
 * Django REST Framework
 * SQLite
