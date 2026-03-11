@@ -9,42 +9,41 @@ def products(request):
 
     page = int(request.GET.get("page", 1))
     limit = int(request.GET.get("limit", 10))
+    category_id = request.GET.get("category_id")
 
     offset = (page - 1) * limit
 
+    base_query = """
+    SELECT id,name,price,stock,category_id
+    FROM products
+    """
+
+    params = []
+
+    if category_id:
+        base_query += " WHERE category_id = %s"
+        params.append(category_id)
+
+    base_query += " ORDER BY id LIMIT %s OFFSET %s"
+
+    params.extend([limit, offset])
+
     with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            SELECT id,name,price,stock,category_id
-            FROM products
-            ORDER BY id
-            LIMIT %s OFFSET %s
-            """,
-            [limit, offset]
-        )
+        cursor.execute(base_query, params)
         rows = cursor.fetchall()
 
-        cursor.execute("SELECT COUNT(*) FROM products")
-        result = cursor.fetchone()
-        total = result[0] if result else 0
-        
     data = [
         {
             "id": r[0],
             "name": r[1],
             "price": float(r[2]),
             "stock": r[3],
-            "category_id": r[4],
+            "category_id": r[4]
         }
         for r in rows
     ]
 
-    return Response({
-        "page": page,
-        "limit": limit,
-        "total": total,
-        "data": data
-    })
+    return Response(data)
 
 
 @api_view(["GET"])
@@ -57,21 +56,23 @@ def product(request, id):
             FROM products
             WHERE id=%s
             """,
-            [id]
+            [id],
         )
         row = cursor.fetchone()
 
     if not row:
         return Response({"error": "product_not_found"}, status=404)
 
-    return Response({
-        "id": row[0],
-        "name": row[1],
-        "price": float(row[2]),
-        "stock": row[3],
-        "category_id": row[4],
-        "created_at": row[5]
-    })
+    return Response(
+        {
+            "id": row[0],
+            "name": row[1],
+            "price": float(row[2]),
+            "stock": row[3],
+            "category_id": row[4],
+            "created_at": row[5],
+        }
+    )
 
 
 @api_view(["POST"])
@@ -91,12 +92,7 @@ def create_product(request):
             INSERT INTO products(category_id,name,price,stock)
             VALUES(%s,%s,%s,%s)
             """,
-            [
-                data["category_id"],
-                data["name"],
-                data["price"],
-                data["stock"]
-            ]
+            [data["category_id"], data["name"], data["price"], data["stock"]],
         )
 
     return Response({"status": "created"})
@@ -114,12 +110,7 @@ def update_product(request, id):
             SET name=%s,price=%s,stock=%s
             WHERE id=%s
             """,
-            [
-                data.get("name"),
-                data.get("price"),
-                data.get("stock"),
-                id
-            ]
+            [data.get("name"), data.get("price"), data.get("stock"), id],
         )
 
     return Response({"status": "updated"})
@@ -129,10 +120,7 @@ def update_product(request, id):
 def delete_product(request, id):
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM products WHERE id=%s",
-            [id]
-        )
+        cursor.execute("DELETE FROM products WHERE id=%s", [id])
 
     return Response({"status": "deleted"})
 
@@ -162,7 +150,7 @@ def products_with_category(request):
             "name": r[1],
             "price": float(r[2]),
             "stock": r[3],
-            "category": r[4]
+            "category": r[4],
         }
         for r in rows
     ]
@@ -176,10 +164,7 @@ def convert_price(request, id):
     currency = request.GET.get("currency", "EUR")
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT name,price FROM products WHERE id=%s",
-            [id]
-        )
+        cursor.execute("SELECT name,price FROM products WHERE id=%s", [id])
         row = cursor.fetchone()
 
     if not row:
@@ -187,10 +172,7 @@ def convert_price(request, id):
 
     try:
 
-        r = requests.get(
-            "https://api.exchangerate-api.com/v4/latest/USD",
-            timeout=5
-        )
+        r = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5)
 
         data = r.json()
 
@@ -201,12 +183,14 @@ def convert_price(request, id):
 
         converted = float(row[1]) * rate
 
-        return Response({
-            "product": row[0],
-            "usd_price": float(row[1]),
-            "converted_price": round(converted, 2),
-            "currency": currency
-        })
+        return Response(
+            {
+                "product": row[0],
+                "usd_price": float(row[1]),
+                "converted_price": round(converted, 2),
+                "currency": currency,
+            }
+        )
 
     except requests.RequestException:
         return Response({"error": "external_api_failed"}, status=500)
@@ -220,9 +204,7 @@ def total_products(request):
         result = cursor.fetchone()
         count = result[0] if result else 0
 
-    return Response({
-        "total_products": count
-    })
+    return Response({"total_products": count})
 
 
 @api_view(["GET"])
@@ -242,12 +224,6 @@ def products_per_category(request):
 
         rows = cursor.fetchall()
 
-    data = [
-        {
-            "category": r[0],
-            "product_count": r[1]
-        }
-        for r in rows
-    ]
+    data = [{"category": r[0], "product_count": r[1]} for r in rows]
 
     return Response(data)
