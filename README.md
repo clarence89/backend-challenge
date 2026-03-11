@@ -10,7 +10,7 @@
 
 ## Project Structure
 
-``` bash
+```bash
 inventory_backend_exam
 │
 ├─ api
@@ -30,7 +30,7 @@ inventory_backend_exam
 └─ README.md
 ```
 
-Database design
+## Database Design
 
 1. categories
 2. products
@@ -41,236 +41,267 @@ Relationship
 
 Each category contains 5 products.
 
-Total records
+Total records:
 
-5 categories
-25 products
+* 5 categories
+* 25 products
 
 ## Features Implemented
 
-* CRUD endpoints for products
+* CRUD endpoints for **products** and **categories**
 * SQL join returning product with category
+* Pagination and filtering for products and categories
 * External API integration for currency conversion
-* Summary endpoints
-* total number of products
-* number of products per category
+* Summary endpoints:
+  * Total number of products
+  * Number of products per category
 * SQL schema and seed scripts
 
 ## Features Not Implemented
 
 * Sentry for Project Monitoring
-* `drf-yasg` or Swagger for API Documentation
+* Swagger (`drf-yasg`) for API Documentation
 * Cache for Currency Converter
-* Mysql/PostgreSQL
+* MySQL/PostgreSQL
 * Containerization (Docker)
-* Proper Security
 * JWT Authentication
-* Viewsets (CRUD Should just use Viewset but since the task needs SQL Scripts I just used an alternative)
-* Models (Due to requirements)
-* Migrations (Due to requirements)
-* Middlewares (Overkill to implement)
-* Row Locking to prevent Race Conditions
-* Atomic Database
+* Django Models & Migrations (raw SQL required)
+* Row Locking / Atomic Transactions (overkill for exam scope)
 
 ## Setup Instructions
 
 ### 1 Clone the repository
 
-``` bash
+```bash
 git clone https://github.com/clarence89/backend-challenge.git
 cd backend-challenge
 ```
 
 ### 2 Create Python virtual environment
 
-``` bash
+```bash
 python -m venv venv
 ```
 
-Activate environment
+Activate environment:
 
-Mac Linux
+**Mac / Linux**
 
-``` bash
+```bash
 source venv/bin/activate
 ```
 
-Windows
+**Windows**
 
-``` bash
+```bash
 venv\Scripts\activate
 ```
 
 ### 3 Install dependencies
 
-``` bash
+```bash
 pip install -r requirements.txt
 ```
 
 ### 4 Initialize the database
 
-Run the database initialization script which executes the SQL schema and seed data.
-
-``` bash
+```bash
 python api/db_init.py
 ```
 
-This creates the SQLite database and inserts the sample records.
-
 ### 5 Start the server
 
-``` bash
+```bash
 python manage.py runserver
 ```
 
-Server runs at
+Server runs at:
 
-``` bash
+```bash
 http://127.0.0.1:8000
 ```
 
 ## API Endpoints
 
-Get all products
+### Products
 
-``` bash
-GET /api/products
+Get all products (supports pagination & category filter):
+
+```bash
+GET /api/products?page=1&limit=10&category_id=1
 ```
 
-Get product by id
+Get product by id:
 
-``` bash
+```bash
 GET /api/products/<id>
 ```
 
-Create product
+Create product:
 
-``` bash
+```bash
 POST /api/products/create
 ```
 
-Example body
+Example body:
 
-``` bash
+```json
 {
-"name":"Tablet",
-"price":300,
-"stock":15,
-"category_id":1
+  "name": "Tablet",
+  "price": 300,
+  "stock": 15,
+  "category_id": 1
 }
 ```
 
-Update product
+Update product:
 
-``` bash
+```bash
 PUT /api/products/<id>/update
 ```
 
-Delete product
+Delete product (soft delete):
 
-``` bash
+```bash
 DELETE /api/products/<id>/delete
 ```
 
-Return products with category (SQL JOIN)
+Return products with category (SQL JOIN):
 
-``` bash
+```bash
 GET /api/products-with-category
 ```
 
-Convert product price using exchange rate API
+Convert product price using ExchangeRate API:
 
-``` bash
+```bash
 GET /api/products/<id>/convert?currency=EUR
 ```
 
-## Summary Endpoints
+### Categories
 
-Total number of products
+Get all categories (supports pagination & name search):
 
-``` bash
+```bash
+GET /api/categories?page=1&limit=10&search=Electronics
+```
+
+Get category by id:
+
+```bash
+GET /api/categories/<id>
+```
+
+Create category:
+
+```bash
+POST /api/categories/create
+```
+
+Example body:
+
+```json
+{
+  "name": "Office"
+}
+```
+
+Update category:
+
+```bash
+PUT /api/categories/<id>/update
+```
+
+Delete category (soft delete):
+
+```bash
+DELETE /api/categories/<id>/delete
+```
+
+### Summary Endpoints
+
+Total number of products:
+
+```bash
 GET /api/summary/total-products
 ```
 
-Number of products per category
+Number of products per category:
 
-``` bash
+```bash
 GET /api/summary/products-per-category
 ```
 
 ## Database Schema
 
-Categories table
+**Categories table**
 
-``` bash
-id
-name
-is_active
-created_at
-```
+| Column     | Type                               |
+| ---------- | ---------------------------------- |
+| id         | INTEGER PK                         |
+| name       | TEXT NOT NULL                      |
+| is_active  | BOOLEAN DEFAULT 1                  |
+| created_at | DATETIME DEFAULT CURRENT_TIMESTAMP |
 
-Products table
+**Products table**
 
-``` bash
-id
-category_id
-name
-price
-stock
-created_at
-```
+| Column      | Type                               |
+| ----------- | ---------------------------------- |
+| id          | INTEGER PK                         |
+| category_id | INTEGER FK → categories.id         |
+| name        | TEXT NOT NULL                      |
+| price       | DECIMAL(10,2) NOT NULL             |
+| stock       | INTEGER NOT NULL                   |
+| is_active   | BOOLEAN DEFAULT 1                  |
+| created_at  | DATETIME DEFAULT CURRENT_TIMESTAMP |
 
-Foreign key
+Index:
 
-``` bash
-products.category_id → categories.id
+```sql
+CREATE INDEX idx_products_category ON products(category_id);
 ```
 
 ## SQL Scripts
 
-Schema creation
+Schema creation:
 
-``` bash
+```bash
 sql/schema.sql
 ```
 
-Seed data
+Seed data:
 
-``` bash
+```bash
 sql/seed.sql
 ```
 
-The seed file inserts:
-
-5 categories
-5 products per category
+*5 categories + 5 products per category*
 
 ## External API Integration
 
-The endpoint
+**Endpoint:**
 
-``` bash
+```bash
 GET /api/products/<id>/convert
 ```
 
-calls the ExchangeRate API to convert the product price from USD to another currency.
+* Converts product price from USD to requested currency
+* Basic error handling:
 
-Basic error handling included
-
-invalid currency
-external API failure
-missing product
+  * invalid currency
+  * missing product
+  * external API failure
 
 ## Testing
 
-You can test endpoints using
+You can test endpoints using:
 
-curl
-Postman
-browser for GET endpoints
+* curl
+* Postman
+* Browser (for GET endpoints)
 
-Example
+Example:
 
-``` bash
+```bash
 http://127.0.0.1:8000/api/products
 ```
