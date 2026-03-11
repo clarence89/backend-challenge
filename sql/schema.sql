@@ -16,3 +16,6 @@ CREATE TABLE
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (category_id) REFERENCES categories (id)
     );
+
+CREATE INDEX idx_products_category
+ON products(category_id);
