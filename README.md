@@ -32,12 +32,12 @@ inventory_backend_exam
 
 ## Database Design
 
-1. categories
-2. products
+1. `categories`
+2. `products`
 
 Relationship
 
-* categories.id → products.category_id
+* `categories.id → products.category_id`
 
 Each category contains 5 products.
 
@@ -53,6 +53,7 @@ Total records:
 * Pagination and filtering for products and categories
 * External API integration for currency conversion
 * Summary endpoints:
+
   * Total number of products
   * Number of products per category
 * SQL schema and seed scripts
@@ -125,25 +126,43 @@ http://127.0.0.1:8000
 
 ### Products
 
-Get all products (supports pagination & category filter):
+Get all products (pagination + category filter)
+
+Endpoint
 
 ```bash
 GET /api/products?page=1&limit=10&category_id=1
 ```
 
-Get product by id:
+Curl example
+
+```bash
+curl "http://127.0.0.1:8000/api/products?page=1&limit=10&category_id=1"
+```
+
+Get product by id
+
+Endpoint
 
 ```bash
 GET /api/products/<id>
 ```
 
-Create product:
+Curl example
+
+```bash
+curl http://127.0.0.1:8000/api/products/1
+```
+
+Create product
+
+Endpoint
 
 ```bash
 POST /api/products/create
 ```
 
-Example body:
+Example body
 
 ```json
 {
@@ -154,51 +173,111 @@ Example body:
 }
 ```
 
-Update product:
+Curl example
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/products/create \
+-H "Content-Type: application/json" \
+-d '{"name":"Tablet","price":300,"stock":15,"category_id":1}'
+```
+
+Update product
+
+Endpoint
 
 ```bash
 PUT /api/products/<id>/update
 ```
 
-Delete product (soft delete):
+Curl example
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/products/1/update \
+-H "Content-Type: application/json" \
+-d '{"name":"Tablet Pro","price":350,"stock":12}'
+```
+
+Delete product (soft delete)
+
+Endpoint
 
 ```bash
 DELETE /api/products/<id>/delete
 ```
 
-Return products with category (SQL JOIN):
+Curl example
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/products/1/delete
+```
+
+Return products with category (SQL JOIN)
+
+Endpoint
 
 ```bash
 GET /api/products-with-category
 ```
 
-Convert product price using ExchangeRate API:
+Curl example
+
+```bash
+curl http://127.0.0.1:8000/api/products-with-category
+```
+
+Convert product price using ExchangeRate API
+
+Endpoint
 
 ```bash
 GET /api/products/<id>/convert?currency=EUR
 ```
 
+Curl example
+
+```bash
+curl "http://127.0.0.1:8000/api/products/1/convert?currency=EUR"
+```
+
 ### Categories
 
-Get all categories (supports pagination & name search):
+Get all categories (pagination + search)
+
+Endpoint
 
 ```bash
 GET /api/categories?page=1&limit=10&search=Electronics
 ```
 
-Get category by id:
+Curl example
+
+```bash
+curl "http://127.0.0.1:8000/api/categories?page=1&limit=10&search=Electronics"
+```
+
+Get category by id
+
+Endpoint
 
 ```bash
 GET /api/categories/<id>
 ```
 
-Create category:
+Curl example
+
+```bash
+curl http://127.0.0.1:8000/api/categories/1
+```
+
+Create category
+
+Endpoint
 
 ```bash
 POST /api/categories/create
 ```
 
-Example body:
+Example body
 
 ```json
 {
@@ -206,30 +285,72 @@ Example body:
 }
 ```
 
-Update category:
+Curl example
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/categories/create \
+-H "Content-Type: application/json" \
+-d '{"name":"Office"}'
+```
+
+Update category
+
+Endpoint
 
 ```bash
 PUT /api/categories/<id>/update
 ```
 
-Delete category (soft delete):
+Curl example
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/categories/1/update \
+-H "Content-Type: application/json" \
+-d '{"name":"Office Equipment"}'
+```
+
+Delete category (soft delete)
+
+Endpoint
 
 ```bash
 DELETE /api/categories/<id>/delete
 ```
 
+Curl example
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/api/categories/1/delete
+```
+
 ### Summary Endpoints
 
-Total number of products:
+Total number of products
+
+Endpoint
 
 ```bash
 GET /api/summary/total-products
 ```
 
-Number of products per category:
+Curl example
+
+```bash
+curl http://127.0.0.1:8000/api/summary/total-products
+```
+
+Number of products per category
+
+Endpoint
 
 ```bash
 GET /api/summary/products-per-category
+```
+
+Curl example
+
+```bash
+curl http://127.0.0.1:8000/api/summary/products-per-category
 ```
 
 ## Database Schema
